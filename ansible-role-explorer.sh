@@ -2,8 +2,8 @@
 
 root="tasks"
 start="main.yml"
-if [[ ! -f "${1}/${cwd}/${start}" ]]; then
-    echo "not found ${1}/${cwd}/${start}"
+if [[ ! -f "${1}/${root}/${start}" ]]; then
+    echo "not found ${1}/${root}/${start}"
     exit 1
 fi
 
@@ -48,7 +48,7 @@ function walk {
 
 		# push cwd to route
 		if [[ $subdir != "." ]]; then
-		    cwd="${cwd}/${subdir}"
+		    cwd="${route[-1]}/${subdir}"
 		fi
 		route=( ${route[@]} ${cwd} )
 
