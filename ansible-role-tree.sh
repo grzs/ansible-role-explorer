@@ -15,12 +15,14 @@ indent_str="|  "
 
 # function definition
 function walk {
-    cwd="${route[@]: -1}"
+    cwd="${route[-1]}"
     tasks_file="${cwd}/${1}"
     echo -n $indent
     echo $tasks_file
+
+    # read file
     IFS=$'\n' lines=($(cat "${tasks_file}" | sed -e 's/^[[:space:]]*//'))
-    for l in ${lines[*]}; do
+    for l in ${lines[@]}; do
 	pattern='(- name:)|(include_tasks:)|(block:)|(when:)|-'
 	case $l in
 	    -\ name:*)
@@ -37,7 +39,7 @@ function walk {
 		filename=`basename ${included}`
 		subdir=`dirname ${included}`
 		if [[ $subdir != "." ]]; then
-		    cwd="${cwd}/${subdir}"
+		    cwd="${route[-1]}/${subdir}"
 		fi
 		# append cwd to route
 		route=( ${route[@]} ${cwd} )
@@ -45,8 +47,9 @@ function walk {
 		indent="${indent}${indent_str}"
 		walk ${filename}
 		indent="${indent:: -${#indent_str}}"
-		#echo -n $indent
-		#echo "resume to ${route[@]}"
+		;;
+	    *)
+		#echo $l
 		;;
 	esac
     done
