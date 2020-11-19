@@ -24,16 +24,14 @@ function walk {
 	case $l in
 	    -\ name:*)
 		let "count++"
-		printf "%s%03d %s\n" "$indent" "$count" "${l}"
+		printf "\n%s%03d %s" "$indent" "$count" "${l}"
 		;;
 	    block:*)
-		echo -n "${indent}${indent_str}"
-		echo ${l}
+		printf "\n%s%s" "${indent}${indent_str}" "${1}"
 		;;
 	    when:x*)
-		echo -n "${indent}${indent_str}"
-		echo ${l}
-		echo "${indent}${indent_str}"
+		printf "\n%s%s" "${indent}${indent_str}" "$1"
+		printf "\n%s" "${indent}${indent_str}"
 		;;
 	    include_tasks:*)
 		included=$(echo $l | awk '{print $2}')
@@ -46,9 +44,8 @@ function walk {
 		# append cwd to route
 		route=( ${route[@]} ${cwd} )
 
-		echo -n "${indent}${indent_str}"
-		echo -e "include_tasks: ${cwd}/${filename}"
-		#echo "${indent}${indent_str}${indent_str}"
+		printf "\n%s%s" "${indent}" "${indent_str}${indent_str}"
+		#printf "\n%s%s%s %s" "${indent}" "${indent_str}" "include_tasks:" "${cwd}/${filename}"
 
 		indent="${indent}${indent_str}"
 		walk ${filename}
@@ -62,9 +59,7 @@ function walk {
 
     # pop last item
     unset 'route[${#route[@]}-1]'
-    echo -n $indent
-    echo -e "<<"
-    echo $indent
+    printf "\n%s%s\n%s" "$indent" "<<" "$indent"
 }
 
 cd $1
