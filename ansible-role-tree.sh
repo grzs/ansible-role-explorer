@@ -11,30 +11,32 @@ fi
 count=0
 route=( "${cwd}" )
 indent=""
-indent_str="|  "
+indent_str="|     "
 
 # function definition
 function walk {
     cwd="${route[-1]}"
     tasks_file="${cwd}/${1}"
-    echo -n $indent
-    echo $tasks_file
 
     # read file
     IFS=$'\n' lines=($(cat "${tasks_file}" | sed -e 's/^[[:space:]]*//'))
     for l in ${lines[@]}; do
-	pattern='(- name:)|(include_tasks:)|(block:)|(when:)|-'
 	case $l in
 	    -\ name:*)
 		let "count++"
-		echo -n $indent
-		echo "${count} ${l}"
+		printf "%s%03d %s\n" "$indent" "$count" "${l}"
+		;;
+	    block:*)
+		echo -n "${indent}${indent_str}"
+		echo ${l}
+		;;
+	    when:x*)
+		echo -n "${indent}${indent_str}"
+		echo ${l}
+		echo "${indent}${indent_str}"
 		;;
 	    include_tasks:*)
 		included=$(echo $l | awk '{print $2}')
-		echo -n "${indent}${indent_str}"
-		echo -e "${l}"
-		echo "${indent}${indent_str}${indent_str}"
 
 		filename=`basename ${included}`
 		subdir=`dirname ${included}`
@@ -43,6 +45,10 @@ function walk {
 		fi
 		# append cwd to route
 		route=( ${route[@]} ${cwd} )
+
+		echo -n "${indent}${indent_str}"
+		echo -e "include_tasks: ${cwd}/${filename}"
+		#echo "${indent}${indent_str}${indent_str}"
 
 		indent="${indent}${indent_str}"
 		walk ${filename}
@@ -57,7 +63,7 @@ function walk {
     # pop last item
     unset 'route[${#route[@]}-1]'
     echo -n $indent
-    echo -e "EOF"
+    echo -e "<<"
     echo $indent
 }
 
