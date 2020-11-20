@@ -46,7 +46,7 @@ function walk {
 		echo "${indent}${indent_str}${indent_str}"
 
 		# check if relative include and set parent dir
-		parent_dir=`dirname ${route[-1]}`
+		[[ ${#route[@]} > 0 ]] && parent_dir=`dirname ${route[-1]}` || parent_dir="${root}"
 		[[ -f "${parent_dir}/${included}" ]] || parent_dir="${root}"
 
 		# dive into included
