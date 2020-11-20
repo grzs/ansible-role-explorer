@@ -9,20 +9,19 @@ fi
 
 # initial values for function
 steps=0
-route=( "${root}" )
+route=()
 indent=""
 indent_str="|     "
 
 # function definition
 function walk {
-    cwd="${route[-1]}"
+    echo "${indent}>> ${1}"
 
-    # if not relative include, default cwd to route
-    [[ -f "${cwd}/${1}" ]] || cwd="${root}"
+    # append path to route
+    route=( ${route[@]} ${1} )
 
-    # entering the file
-    tasks_file="${cwd}/${1}"
-    IFS=$'\n' lines=($(cat "${tasks_file}" | sed -e 's/^[[:space:]]*//'))
+    # entering the file at head of route
+    IFS=$'\n' lines=($(cat "${route[-1]}" | sed -e 's/^[[:space:]]*//'))
 
     # iterate over lines
     for l in ${lines[@]}; do
@@ -42,45 +41,38 @@ function walk {
 		;;
 	    include_tasks:*)
 		included=$(echo $l | awk '{print $2}')
-
-		filename=`basename ${included}`
-		subdir=`dirname ${included}`
-
-		# push cwd to route
-		if [[ $subdir != "." ]]; then
-		    cwd="${route[-1]}/${subdir}"
-		fi
-		route=( ${route[@]} ${cwd} )
-
-		echo "${indent}${indent_str}${indent_str}"
 		echo -n "${indent}${indent_str}"
-		echo -e "include_tasks: ${cwd}/${filename}"
+		echo -e "include_tasks:"
+		echo "${indent}${indent_str}${indent_str}"
 
-		# dive to include
+		# check if relative include and set parent dir
+		parent_dir=`dirname ${route[-1]}`
+		[[ -f "${parent_dir}/${included}" ]] || parent_dir="${root}"
+
+		# dive into included
 		indent="${indent}${indent_str}"
-		walk ${filename}
+		walk "${parent_dir}/${included}"
 		indent="${indent:: -${#indent_str}}"
-		# resume from include
+		# resume from included
 		;;
 	    *)
 		#echo $l
 		;;
 	esac
     done
-
     # reached EOF
-    echo -n $indent
-    echo -e "<<"
-    echo $indent
-
-    # pop last route item
+    # pop path from route
     unset 'route[${#route[@]}-1]'
+    if [[ ${#route[@]} > 0 ]]; then
+	echo "${indent}"
+	echo "${indent::-6}<< ${route[-1]}"
+    fi
 }
 
 cd $1
 role=`basename ${PWD}`
 echo -e "Tasks in role ${role}:\n"
 
-walk ${start}
+walk "${root}/${start}"
 
 exit 0
