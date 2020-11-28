@@ -41,13 +41,16 @@ function walk {
 		    indenter
 		    printf "%s %s" "$task_prefix" "${task_cur}"
 		    if [[ $when ]]; then
-			printf " ? %s" "${when:6}"
+			printf " -- ??%s" "${when:5}"
 			unset when
 		    fi
 		fi
 		let steps++
 		task_prefix=`printf "%03d" ${steps}`
 		task_cur=$(echo $l | sed 's/^- name: //')
+		;;
+	    set_fact:*)
+		task_prefix+=" (set_fact)"
 		;;
 	    block:*)
 		let steps--
@@ -62,7 +65,7 @@ function walk {
 		;;
 	    -\ *)
 		if [[ $when =~ ^when:.* ]]; then
-		    when+=" ??${l:1}"
+		    when+="${l:1} ??"
 		fi
 		;;
 	    include_tasks*|import_tasks*)
