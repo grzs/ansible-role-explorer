@@ -25,7 +25,7 @@ function indenter {
 
 function walk {
     indenter
-    printf "%s %s" "\\" "${1}"
+    printf "[%s]" "${1}"
 
     # append path to route
     route=( ${route[@]} ${1} )
@@ -40,6 +40,10 @@ function walk {
 		if [[ $task_cur ]]; then
 		    indenter
 		    printf "%s %s" "$task_prefix" "${task_cur}"
+		    if [[ $when ]]; then
+			printf " ? %s" "${when:6}"
+			unset when
+		    fi
 		fi
 		let steps++
 		task_prefix=`printf "%03d" ${steps}`
@@ -53,20 +57,23 @@ function walk {
 		let steps--
 		task_prefix="  } rescue :"
 		;;
-	    when:x*)
-		echo -n "${indent}${indent_str}"
-		echo ${l}
-		echo "${indent}${indent_str}"
+	    when:*)
+		when=$l
+		;;
+	    -\ *)
+		if [[ $when =~ ^when:.* ]]; then
+		    when+=" ??${l:1}"
+		fi
 		;;
 	    include_tasks*|import_tasks*)
 		included=$(echo $l | awk '{print $2}')
 		let steps--
-		task_prefix="[include_tasks]"
+		task_prefix="include_tasks"
 		
 		indenter
-		printf "%s" "|\_"
+		printf "|\_"
 		indenter
-		printf "%s %s" "|  \_  ${task_prefix} -" "${task_cur}"
+		printf "|  \_ %s - %s" "${task_prefix}" "${task_cur}"
 		unset task_cur
 
 		# check if relative include and set parent dir
@@ -97,7 +104,7 @@ function walk {
 	indenter
 	let "level--"
 	indenter
-	printf "%s %s" "/" "${route[-1]}"
+	printf "[%s]" "${route[-1]}"
     fi
 }
 
